@@ -7,7 +7,9 @@ import numbers
 import requests
 from commands.write_payment import create_payment, update_status_to_paid
 from queries.read_payment import get_payment_by_id
+from logger import Logger
 
+logger = Logger.get_instance("payment_controller")
 def get_payment(payment_id):
     return get_payment_by_id(payment_id)
 
@@ -31,7 +33,7 @@ def process_payment(payment_id, credit_card_data):
     # Si le paiement est réussi, mettre à jour les statut de la commande
     # Ensuite, faire la mise à jour de la commande dans le Store Manager (en utilisant l'order_id)
     update_result = update_status_to_paid(payment_id)
-    print(f"Updated order {update_result['order_id']} to paid={update_result}")
+    logger.debug(f"Updated order {update_result['order_id']} to paid={update_result}")
     result = {
         "order_id": update_result["order_id"],
         "payment_id": update_result["payment_id"],
@@ -42,6 +44,6 @@ def process_payment(payment_id, credit_card_data):
     
 def _process_credit_card_payment(payment_data):
     """ Placeholder method for simulated credit card payment """
-    print(payment_data.get('cardNumber'))
-    print(payment_data.get('cardCode'))
-    print(payment_data.get('expirationDate'))
+    logger.debug(payment_data.get('cardNumber'))
+    logger.debug(payment_data.get('cardCode'))
+    logger.debug(payment_data.get('expirationDate'))

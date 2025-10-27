@@ -6,7 +6,7 @@ Auteurs : Gabriel C. Ullmann, Fabio Petrillo, 2025
 
 from models.payment import Payment
 from db import get_sqlalchemy_session
-
+import requests
 def create_payment(order_id: int, user_id: int, total_amount: float):
     """Insert payment with items in MySQL"""
     if not order_id or not user_id or not total_amount or float(total_amount) <= 0:
@@ -19,6 +19,7 @@ def create_payment(order_id: int, user_id: int, total_amount: float):
         session.add(new_payment)
         session.flush() 
         session.commit()
+        print(new_payment.id)
         return new_payment.id
     except Exception as e:
         session.rollback()
@@ -39,17 +40,30 @@ def update_status_to_paid(payment_id: int):
         
         if not payment:
             raise ValueError(f"Aucun paiement trouvé avec l'ID {payment_id}")
-        
+
         # Update the payment status
         payment.is_paid = True
+
         session.commit()
-        
+
+        # update order status in Store Manager could be done here (not implemented)
+        response_from_order_service = requests.put(f"http://api-gateway:8080/store-api/orders",
+            json={
+                "order_id": payment.order_id,
+                "is_paid": True
+            },
+            headers={"Content-Type": "application/json"}
+        )
+
+        if not response_from_order_service.ok:
+            raise Exception(f"Failed to update order status in Store Manager: {response_from_order_service.text}")
+
         return {
             "payment_id": payment_id,
             "order_id": payment.order_id,
             "is_paid": True
         }
-        
+
     except Exception as e:
         session.rollback()
         return {

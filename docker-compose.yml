@@ -4,6 +4,11 @@ services:
     container_name: payments_api 
     environment:
       - PYTHONUNBUFFERED=1
+      - DB_HOST=mysql_payments
+      - DB_PORT=3306
+      - DB_NAME=labo05_payments_db
+      - DB_USER=labo05
+      - DB_PASS=labo05
     volumes:
       - .:/app
     ports:
@@ -11,7 +16,8 @@ services:
     networks:
       - labo05-network
     depends_on:
-      - mysql_payments
+      mysql_payments:
+        condition: service_healthy
 
   mysql_payments:
     image: mysql:8
@@ -21,10 +27,16 @@ services:
       MYSQL_DATABASE: labo05_payments_db
       MYSQL_USER: labo05
       MYSQL_PASSWORD: labo05
-    # ports:
-    #   - "3306:3306"
     networks:
       - labo05-network
+    ports:
+      - "3304:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "labo05", "-plabo05"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d
